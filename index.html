@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Erklärbär – Jedes Thema, dein Level</title>
+<meta name="description" content="Lade eine PDF hoch oder gib ein Thema ein – und bekomme Erklärungen von Kind-Level bis Einstein-Level.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --page:        #d9d9de;
+    --bg:          #f6f5f3;
+    --card:        #ffffff;
+    --ink:         #16151a;
+    --ink-2:       #74737c;
+    --ink-3:       #a8a7b0;
+    --line:        #ececef;
+    --green:       #34c759;
+    --green-deep:  #1faa46;
+    --green-soft:  #e9f9ee;
+    --purple:      #8b5cf6;
+    --purple-soft: #f3edff;
+    --yellow-soft: #fff6dd;
+    --pink-soft:   #fdeef6;
+    --blue-soft:   #e8f3ff;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: var(--page);
+    background-image: radial-gradient(circle, rgba(22,21,26,0.10) 1px, transparent 1px);
+    background-size: 22px 22px;
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 2.5rem 1.25rem 5rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── App shell ── */
+  .app {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--bg);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 2px rgba(22,21,26,0.04),
+      0 6px 20px rgba(22,21,26,0.08),
+      0 28px 72px -16px rgba(22,21,26,0.24);
+    animation: appRise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes appRise {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Dark masthead ── */
+  .masthead {
+    background: var(--ink);
+    padding: 1.6rem 2rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Ghost bear, decorative */
+  .masthead::before {
+    content: '🐻';
+    position: absolute;
+    right: -16px;
+    top: -22px;
+    font-size: 120px;
+    line-height: 1;
+    opacity: 0.07;
+    pointer-events: none;
+    filter: grayscale(1);
+  }
+
+  /* Green accent rule */
+  .masthead::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 3px;
+    background: var(--green);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .brand-mark {
+    width: 46px; height: 46px;
+    background: var(--green);
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 18px -4px rgba(52,199,89,0.55);
+  }
+
+  .brand-text h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .brand-text p {
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 5px;
+  }
+
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffce46, var(--green));
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Sora', sans-serif;
+    color: var(--ink);
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+  }
+
+  /* ── Content padding ── */
+  .content {
+    padding: 2.25rem 2rem 2.5rem;
+  }
+
+  /* ── Sections with editorial step numbers ── */
+  .section {
+    margin-bottom: 2rem;
+  }
+
+  .step-deco {
+    display: block;
+    font-family: 'Sora', sans-serif;
+    font-size: 62px;
+    font-weight: 700;
+    letter-spacing: -0.06em;
+    color: var(--line);
+    line-height: 0.88;
+    margin-bottom: -8px;
+    padding-left: 3px;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .section-label {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: var(--ink-2);
+    margin-bottom: 13px;
+    position: relative;
+  }
+
+  /* ── Input card ── */
+  .input-card {
+    background: var(--card);
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+
+  .mode-tabs {
+    display: flex;
+    padding: 10px 10px 0;
+    gap: 4px;
+  }
+
+  .mode-tab {
+    flex: 1;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-2);
+    padding: 9px 12px;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all 0.18s;
+    border: none;
+    background: transparent;
+    text-align: center;
+  }
+
+  .mode-tab:hover { color: var(--ink); background: var(--bg); }
+  .mode-tab.active { background: var(--ink); color: #fff; font-weight: 600; }
+
+  .panel { display: none; padding: 12px 14px 14px; }
+  .panel.active { display: block; }
+
+  textarea, input[type="text"] {
+    width: 100%;
+    font-size: 14px;
+    font-family: 'Inter', inherit;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--ink);
+    outline: none;
+    line-height: 1.6;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  textarea { height: 96px; resize: none; }
+
+  textarea:focus, input[type="text"]:focus {
+    border-color: rgba(22,21,26,0.35);
+    box-shadow: 0 0 0 3px rgba(22,21,26,0.05);
+  }
+
+  ::placeholder { color: var(--ink-3); font-size: 13.5px; }
+
+  .drop-zone {
+    border: 1.5px dashed var(--line);
+    border-radius: 10px;
+    padding: 2.25rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .drop-zone:hover { background: var(--bg); border-color: rgba(22,21,26,0.3); }
+  .drop-zone .icon { font-size: 28px; opacity: 0.38; margin-bottom: 8px; }
+  .drop-zone .hint { font-size: 13px; color: var(--ink-2); }
+  .drop-zone .fname {
+    font-size: 13px; color: var(--green-deep);
+    font-weight: 600; margin-top: 6px; display: none;
+  }
+
+  .passage-row { margin-top: 11px; }
+  .passage-row label {
+    font-size: 10.5px;
+    color: var(--ink-3);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Level cards ── */
+  .levels {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .level-card {
+    border-radius: 18px;
+    padding: 18px 8px 16px;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.22s ease;
+    border: 2px solid transparent;
+    position: relative;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .level-card:hover { transform: translateY(-3px); }
+
+  .c-0 { background: var(--green-soft); }
+  .c-1 { background: var(--yellow-soft); }
+  .c-2 { background: var(--purple-soft); }
+  .c-3 { background: var(--pink-soft); }
+  .c-4 { background: var(--blue-soft); }
+
+  /* Active: invert to dark with dot texture */
+  .level-card.active {
+    background: var(--ink) !important;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.065) 1px, transparent 1px) !important;
+    background-size: 11px 11px !important;
+    border-color: var(--ink);
+    box-shadow: 0 16px 44px -12px rgba(22,21,26,0.45);
+    transform: translateY(-5px);
+  }
+
+  /* Small color swatch dot — visible when active */
+  .level-card .swatch {
+    position: absolute;
+    top: 9px; right: 9px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.22s;
+  }
+
+  .level-card.active .swatch { opacity: 1; }
+  .c-0 .swatch { background: var(--green); }
+  .c-1 .swatch { background: #f5c518; }
+  .c-2 .swatch { background: var(--purple); }
+  .c-3 .swatch { background: #f472b6; }
+  .c-4 .swatch { background: #60a5fa; }
+
+  .level-card .emoji {
+    font-size: 34px;
+    line-height: 1;
+    display: block;
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .level-card:hover .emoji { transform: scale(1.08); }
+  .level-card.active .emoji { transform: scale(1.14); }
+
+  .level-card .lname {
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    display: block;
+    transition: color 0.2s;
+  }
+  .level-card.active .lname { color: #fff; }
+
+  .level-card .ldesc {
+    font-size: 9.5px;
+    color: var(--ink-3);
+    display: block;
+    line-height: 1.3;
+    transition: color 0.2s;
+  }
+  .level-card.active .ldesc { color: rgba(255,255,255,0.42); }
+
+  /* ── All-levels button ── */
+  .all-btn {
+    width: 100%;
+    margin-top: 9px;
+    padding: 11px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 99px;
+    border: 1.5px dashed rgba(22,21,26,0.18);
+    background: transparent;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: all 0.18s;
+    letter-spacing: 0.01em;
+  }
+
+  .all-btn:hover { color: var(--ink); border-color: var(--ink-3); background: var(--card); }
+  .all-btn.active {
+    background: var(--card);
+    color: var(--ink);
+    border-style: solid;
+    border-color: var(--ink);
+    box-shadow: 0 4px 14px -4px rgba(22,21,26,0.14);
+  }
+
+  /* ── CTA ── */
+  .cta-hint {
+    font-size: 11px;
+    color: var(--ink-3);
+    text-align: center;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 10px;
+    min-height: 16px;
+  }
+
+  .go-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Sora', sans-serif;
+    letter-spacing: -0.025em;
+    border-radius: 99px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition:
+      opacity 0.15s,
+      transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.22s ease;
+    box-shadow: 0 8px 32px -8px rgba(22,21,26,0.52);
+  }
+
+  .go-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 48px -12px rgba(22,21,26,0.44);
+    opacity: 0.88;
+  }
+
+  .go-btn:disabled {
+    opacity: 0.17;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* ── Loading ── */
+  .loading { text-align: center; padding: 2.5rem 0; display: none; }
+  .loading.visible { display: block; }
+
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2.5px solid var(--line);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.65s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading p { font-size: 13.5px; color: var(--ink-2); }
+
+  /* ── Error ── */
+  .error {
+    background: #fff0ee;
+    color: #b33b20;
+    border: 1px solid #fad5cc;
+    border-radius: 10px;
+    padding: 12px 15px;
+    font-size: 13.5px;
+    margin-top: 14px;
+    display: none;
+  }
+  .error.visible { display: block; }
+
+  /* ── Results ── */
+  .results { margin-top: 2rem; display: none; }
+  .results.visible { display: block; }
+
+  .results-eyebrow {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: var(--ink-3);
+    margin-bottom: 12px;
+  }
+
+  .result-card {
+    background: var(--card);
+    border-radius: 18px;
+    /* left border color set inline per level */
+    border: 1px solid var(--line);
+    border-left-width: 5px;
+    padding: 1.25rem 1.4rem 1.25rem 1.15rem;
+    margin-bottom: 10px;
+    animation: fadeUp 0.38s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .result-emoji { font-size: 22px; line-height: 1; flex-shrink: 0; }
+
+  .result-name {
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .result-sub {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--ink-3);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .result-body {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 540px) {
+    body { padding: 1rem 0.75rem 4rem; }
+    .content { padding: 1.75rem 1.25rem 2rem; }
+    .masthead { padding: 1.4rem 1.25rem; }
+    .brand-text h1 { font-size: 22px; }
+    .step-deco { font-size: 48px; }
+    .levels { gap: 5px; }
+    .level-card { min-height: 116px; padding: 14px 5px 12px; }
+    .level-card .emoji { font-size: 26px; }
+    .level-card .lname { font-size: 11px; }
+    .level-card .ldesc { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="masthead">
+    <div class="brand">
+      <div class="brand-mark">🐻</div>
+      <div class="brand-text">
+        <h1>Erklärbär</h1>
+        <p>Jedes Thema · Von Kind bis Einstein</p>
+      </div>
+    </div>
+    <div class="avatar">D</div>
+  </div>
+
+  <div class="content">
+
+    <!-- 01 — Input -->
+    <div class="section">
+      <span class="step-deco" aria-hidden="true">01</span>
+      <span class="section-label">Thema oder Dokument</span>
+      <div class="input-card">
+        <div class="mode-tabs">
+          <button class="mode-tab active" data-mode="topic">💬 Thema eingeben</button>
+          <button class="mode-tab" data-mode="pdf">📄 PDF hochladen</button>
+        </div>
+        <div class="panel active" id="panel-topic">
+          <textarea id="topicInput" placeholder="z.B. Wie funktioniert Muskelaufbau? Was ist eine API? Quantenverschränkung..."></textarea>
+        </div>
+        <div class="panel" id="panel-pdf">
+          <div class="drop-zone" id="dropZone">
+            <div class="icon">📄</div>
+            <div class="hint">PDF hier ablegen oder klicken (z.B. Vorlesungsfolien)</div>
+            <div class="fname" id="fname"></div>
+          </div>
+          <input type="file" id="fileInput" accept=".pdf" style="display:none">
+          <div class="passage-row">
+            <label>Optional: Passage oder Konzept</label>
+            <input type="text" id="passageInput" placeholder='z.B. „Folie 12, Regressionsanalyse" – oder leer lassen für das Hauptthema'>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 — Level -->
+    <div class="section">
+      <span class="step-deco" aria-hidden="true">02</span>
+      <span class="section-label">Erklär-Level wählen</span>
+      <div class="levels" id="levels">
+        <div class="level-card c-2" data-level="gleiche_ebene">
+          <div class="swatch"></div>
+          <span class="emoji">📖</span>
+          <span class="lname">Gleiche Ebene</span>
+          <span class="ldesc">Sprache vereinfacht</span>
+        </div>
+        <div class="level-card c-1 active" data-level="alltagstauglich">
+          <div class="swatch"></div>
+          <span class="emoji">💬</span>
+          <span class="lname">Alltagstauglich</span>
+          <span class="ldesc">Für alle verständlich</span>
+        </div>
+        <div class="level-card c-0" data-level="kinderleicht">
+          <div class="swatch"></div>
+          <span class="emoji">🧸</span>
+          <span class="lname">Kinderleicht</span>
+          <span class="ldesc">Ganz simpel</span>
+        </div>
+      </div>
+      <button class="all-btn" id="allBtn">✨ Alle 3 Level gleichzeitig anzeigen</button>
+    </div>
+
+    <!-- 03 — Go -->
+    <div class="section" style="margin-bottom:0">
+      <span class="step-deco" aria-hidden="true">03</span>
+      <span class="section-label">Erklärung abrufen</span>
+      <div class="cta-hint" id="ctaHint">💬 Alltagstauglich ausgewählt</div>
+      <button class="go-btn" id="goBtn" disabled>Erklär's mir →</button>
+    </div>
+
+    <div class="error" id="errorBox"></div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p id="loadMsg">Der Bär denkt nach...</p>
+    </div>
+
+    <div class="results" id="results">
+      <div class="results-eyebrow">Erklärungen</div>
+    </div>
+
+    <footer>Gebaut mit Claude API · Keine Daten werden gespeichert</footer>
+
+  </div>
+</div>
+
+<script>
+  const LEVELS = {
+    gleiche_ebene:  { emoji: '📖', label: 'Gleiche Ebene',  sub: 'Sprache vereinfacht', border: '#8b5cf6' },
+    alltagstauglich:{ emoji: '💬', label: 'Alltagstauglich',sub: 'Für alle verständlich',border: '#f5c518' },
+    kinderleicht:   { emoji: '🧸', label: 'Kinderleicht',   sub: 'Ganz simpel',         border: '#34c759' }
+  };
+
+  let mode = 'topic';
+  let selectedLevel = 'alltagstauglich';
+  let allMode = false;
+  let pdfB64 = null;
+
+  function updateHint() {
+    const hint = document.getElementById('ctaHint');
+    if (allMode) {
+      hint.textContent = 'Alle 3 Level werden erklärt';
+    } else {
+      const m = LEVELS[selectedLevel];
+      hint.textContent = `${m.emoji} ${m.label} ausgewählt`;
+    }
+  }
+
+  // Mode tabs
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      mode = tab.dataset.mode;
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + mode).classList.add('active');
+      checkReady();
+    });
+  });
+
+  // Level cards
+  document.querySelectorAll('.level-card').forEach(card => {
+    card.addEventListener('click', () => {
+      allMode = false;
+      document.getElementById('allBtn').classList.remove('active');
+      document.querySelectorAll('.level-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      selectedLevel = card.dataset.level;
+      updateHint();
+    });
+  });
+
+  document.getElementById('allBtn').addEventListener('click', () => {
+    allMode = !allMode;
+    document.getElementById('allBtn').classList.toggle('active', allMode);
+    document.querySelectorAll('.level-card').forEach(c =>
+      c.classList.toggle('active', allMode ? false : c.dataset.level === selectedLevel)
+    );
+    updateHint();
+  });
+
+  // PDF upload
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.background = 'var(--bg)'; });
+  dropZone.addEventListener('dragleave', () => dropZone.style.background = '');
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.style.background = '';
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') loadPDF(f);
+  });
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) loadPDF(e.target.files[0]); });
+
+  function loadPDF(file) {
+    if (file.size > 8 * 1024 * 1024) {
+      showError('PDF zu groß (max 8 MB). Tipp: Nur die relevanten Seiten exportieren.');
+      return;
+    }
+    const r = new FileReader();
+    r.onload = ev => {
+      pdfB64 = ev.target.result.split(',')[1];
+      document.getElementById('fname').textContent = file.name;
+      document.getElementById('fname').style.display = 'block';
+      dropZone.querySelector('.hint').style.display = 'none';
+      checkReady();
+    };
+    r.readAsDataURL(file);
+  }
+
+  document.getElementById('topicInput').addEventListener('input', checkReady);
+
+  function checkReady() {
+    document.getElementById('goBtn').disabled =
+      mode === 'topic'
+        ? document.getElementById('topicInput').value.trim().length < 3
+        : !pdfB64;
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorBox');
+    el.textContent = msg;
+    el.classList.add('visible');
+    setTimeout(() => el.classList.remove('visible'), 6000);
+  }
+
+  const loadMsgs = [
+    'Der Bär denkt nach…',
+    'Konzepte werden zerlegt…',
+    'Erklärungen werden formuliert…',
+    'Gleich fertig…'
+  ];
+  let msgI = 0, msgTimer;
+
+  document.getElementById('goBtn').addEventListener('click', async () => {
+    const goBtn    = document.getElementById('goBtn');
+    const loading  = document.getElementById('loading');
+    const results  = document.getElementById('results');
+    const eyebrow  = results.querySelector('.results-eyebrow');
+
+    results.classList.remove('visible');
+    results.innerHTML = '';
+    if (eyebrow) results.appendChild(eyebrow);
+
+    document.getElementById('errorBox').classList.remove('visible');
+    loading.classList.add('visible');
+    goBtn.disabled = true;
+    msgI = 0;
+    document.getElementById('loadMsg').textContent = loadMsgs[0];
+    msgTimer = setInterval(() => {
+      msgI = (msgI + 1) % loadMsgs.length;
+      document.getElementById('loadMsg').textContent = loadMsgs[msgI];
+    }, 2500);
+
+    const levelsToFetch = allMode ? Object.keys(LEVELS) : [selectedLevel];
+
+    const payload = {
+      levels:  levelsToFetch,
+      mode,
+      topic:   mode === 'topic' ? document.getElementById('topicInput').value.trim() : null,
+      passage: mode === 'pdf'   ? document.getElementById('passageInput').value.trim() : null,
+      pdf:     mode === 'pdf'   ? pdfB64 : null
+    };
+
+    try {
+      const resp = await fetch('/api/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      clearInterval(msgTimer);
+      loading.classList.remove('visible');
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || `Server-Fehler (${resp.status})`);
+      }
+
+      const data = await resp.json();
+
+      levelsToFetch.forEach((lvl, i) => {
+        const m = LEVELS[lvl];
+        const card = document.createElement('div');
+        card.className = 'result-card';
+        card.style.animationDelay = (i * 0.09) + 's';
+        card.style.borderLeftColor = m.border;
+        card.innerHTML = `
+          <div class="result-head">
+            <span class="result-emoji">${m.emoji}</span>
+            <span class="result-name">${m.label}</span>
+            <span class="result-sub">${m.sub}</span>
+          </div>
+          <div class="result-body"></div>
+        `;
+        card.querySelector('.result-body').textContent = data.explanations[lvl] || '–';
+        results.appendChild(card);
+      });
+
+      results.classList.add('visible');
+      goBtn.disabled = false;
+      checkReady();
+    } catch (err) {
+      clearInterval(msgTimer);
+      loading.classList.remove('visible');
+      showError('Fehler: ' + err.message);
+      goBtn.disabled = false;
+      checkReady();
+    }
+  });
+
+  updateHint();
+</script>
+</body>
+</html>

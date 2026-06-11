@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Erklärbär – Design v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --page: #d9d9de;
+    --bg: #f6f5f3;
+    --card: #ffffff;
+    --ink: #16151a;
+    --ink-2: #74737c;
+    --ink-3: #a8a7b0;
+    --line: #ececef;
+    --green: #34c759;
+    --green-deep: #1faa46;
+    --green-soft: #e9f9ee;
+    --purple: #8b5cf6;
+    --purple-soft: #f3edff;
+    --yellow: #ffce46;
+    --yellow-soft: #fff6dd;
+    --pink-soft: #fdeef6;
+    --r-lg: 24px;
+    --r-md: 16px;
+    --r-sm: 12px;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--page);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 2.5rem 1.25rem 4rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 1140px;
+    margin: 0 auto;
+    background: var(--bg);
+    border-radius: 28px;
+    padding: 1.75rem;
+    box-shadow: 0 24px 80px -24px rgba(22,21,26,0.25);
+  }
+
+  /* Top nav */
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: var(--card);
+    border-radius: var(--r-lg);
+    padding: 14px 22px;
+    margin-bottom: 1.5rem;
+  }
+
+  .logo {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo .bear {
+    width: 34px; height: 34px;
+    background: var(--green);
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+  }
+
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    margin: 0 auto;
+  }
+
+  .nav-tab {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ink-2);
+    padding: 9px 18px;
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-tab:hover { color: var(--ink); }
+
+  .nav-tab.active {
+    background: var(--ink);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .nav .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--yellow), var(--green));
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 18px;
+    align-items: start;
+  }
+
+  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
+
+  .section-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Document card */
+  .doc-card {
+    background: var(--card);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+  }
+
+  .doc-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .doc-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--green-soft);
+    color: var(--green-deep);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 99px;
+  }
+
+  .doc-pages {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .doc-pages .pg-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--bg);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--ink);
+    transition: background 0.2s;
+  }
+
+  .doc-pages .pg-btn:hover { background: var(--line); }
+  .doc-pages .pg-btn.dark { background: var(--ink); color: #fff; }
+
+  .doc-body {
+    padding: 1.75rem 2.1rem 2rem;
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: #3c3b42;
+    position: relative;
+  }
+
+  .doc-eyebrow {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--purple);
+    background: var(--purple-soft);
+    padding: 4px 12px;
+    border-radius: 99px;
+    margin-bottom: 12px;
+  }
+
+  .doc-body h3 {
+    font-family: 'Sora', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+
+  .doc-body p { margin-bottom: 13px; }
+
+  .marked {
+    background: var(--yellow-soft);
+    box-shadow: inset 0 -2px 0 var(--yellow);
+    padding: 1px 3px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .float-btn {
+    position: absolute;
+    bottom: 70px;
+    right: 36px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: 99px;
+    box-shadow: 0 12px 32px -8px rgba(22,21,26,0.45);
+    cursor: pointer;
+    animation: pop 0.4s cubic-bezier(0.34,1.5,0.64,1) both;
+  }
+
+  .float-btn .spark {
+    width: 20px; height: 20px;
+    background: var(--green);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+  }
+
+  @keyframes pop {
+    from { transform: scale(0.8) translateY(8px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  /* Right column */
+  .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Level cards — colorful like the course cards */
+  .levels { display: flex; flex-direction: column; gap: 10px; }
+
+  .level-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  .level-card {
+    border-radius: var(--r-md);
+    padding: 16px 14px 14px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 2px solid transparent;
+    position: relative;
+  }
+
+  .level-card:hover { transform: translateY(-2px); }
+
+  .level-card.c-green { background: var(--green-soft); }
+  .level-card.c-purple { background: var(--purple-soft); }
+  .level-card.c-pink { background: var(--pink-soft); }
+
+  .level-card.active {
+    border-color: var(--ink);
+    box-shadow: 0 8px 24px -8px rgba(22,21,26,0.2);
+  }
+
+  .level-card .check {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    display: none;
+    place-items: center;
+    font-size: 10px;
+  }
+
+  .level-card.active .check { display: grid; }
+
+  .level-card .icon { font-size: 24px; margin-bottom: 8px; display: block; }
+
+  .level-card .lname {
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    display: block;
+  }
+
+  .level-card .ldesc {
+    font-size: 10.5px;
+    color: var(--ink-2);
+    margin-top: 3px;
+    display: block;
+    line-height: 1.4;
+  }
+
+  /* Result card */
+  .result-card {
+    background: var(--card);
+    border-radius: var(--r-lg);
+    padding: 1.5rem 1.65rem;
+  }
+
+  .result-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .result-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--green-soft);
+    color: var(--green-deep);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 13px;
+    border-radius: 99px;
+  }
+
+  .result-src {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+
+  .result-body {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #2e2d34;
+  }
+
+  .result-body p + p { margin-top: 11px; }
+  .result-body strong { font-weight: 600; }
+
+  .orig-box {
+    margin-top: 16px;
+    background: var(--bg);
+    border-radius: var(--r-sm);
+    padding: 13px 15px;
+  }
+
+  .orig-box .ol {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    margin-bottom: 5px;
+  }
+
+  .orig-box .ot {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    font-style: italic;
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .btn {
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 99px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-dark { background: var(--ink); color: #fff; }
+  .btn-dark:hover { background: #2c2b33; }
+
+  .btn-ghost {
+    background: var(--bg);
+    color: var(--ink-2);
+  }
+
+  .btn-ghost:hover { background: var(--line); color: var(--ink); }
+
+  /* Streak-like fun card */
+  .fun-card {
+    background: var(--green);
+    border-radius: var(--r-lg);
+    padding: 1.4rem 1.5rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .fun-card .emoji { font-size: 34px; }
+
+  .fun-card .fc-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .fun-card .fc-sub {
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+
+  .note {
+    text-align: center;
+    margin-top: 1.75rem;
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Nav -->
+  <div class="nav">
+    <div class="logo"><span class="bear">🐻</span> Erklärbär</div>
+    <div class="nav-tabs">
+      <div class="nav-tab">Thema</div>
+      <div class="nav-tab active">Dokument</div>
+      <div class="nav-tab">Verlauf</div>
+    </div>
+    <div class="avatar">D</div>
+  </div>
+
+  <div class="layout">
+
+    <!-- LEFT: Document -->
+    <div>
+      <div class="section-title">Dein Dokument</div>
+      <div class="doc-card">
+        <div class="doc-head">
+          <div class="doc-chip">📄 Statistik_II_VL07.pdf</div>
+          <div class="doc-pages">
+            <div class="pg-btn">‹</div>
+            <span>12 / 34</span>
+            <div class="pg-btn dark">›</div>
+          </div>
+        </div>
+
+        <div class="doc-body">
+          <span class="doc-eyebrow">Vorlesung 7 · Folie 12</span>
+          <h3>Multiple lineare Regression</h3>
+
+          <p>Die multiple lineare Regression erweitert das einfache Regressionsmodell um zusätzliche Prädiktoren, sodass der Einfluss mehrerer unabhängiger Variablen simultan geschätzt werden kann.</p>
+
+          <p><span class="marked">Der Determinationskoeffizient R² quantifiziert den Anteil der Varianz der abhängigen Variable, der durch die Gesamtheit der Prädiktoren aufgeklärt wird, wobei das korrigierte R² eine Schrumpfungskorrektur vornimmt, um die Überschätzung der Populationsvarianzaufklärung zu kompensieren.</span></p>
+
+          <p>Die Signifikanzprüfung des Gesamtmodells erfolgt über den F-Test, während einzelne Regressionskoeffizienten mittels t-Tests geprüft werden.</p>
+
+          <div class="float-btn"><span class="spark">✦</span> Erklär mir das</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-col">
+
+      <div>
+        <div class="section-title">Wie einfach? <span style="font-size:13px; font-weight:450; color:var(--ink-2); margin-left:auto;">für deine Markierung</span></div>
+        <div class="level-row">
+          <div class="level-card c-green active">
+            <div class="check">✓</div>
+            <span class="icon">🧸</span>
+            <span class="lname">Kinderleicht</span>
+            <span class="ldesc">wie für ein Kind erklärt</span>
+          </div>
+          <div class="level-card c-purple">
+            <div class="check">✓</div>
+            <span class="icon">💬</span>
+            <span class="lname">Einfacher</span>
+            <span class="ldesc">ohne Fachjargon</span>
+          </div>
+          <div class="level-card c-pink">
+            <div class="check">✓</div>
+            <span class="icon">📖</span>
+            <span class="lname">Zugänglicher</span>
+            <span class="ldesc">Niveau bleibt erhalten</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-card">
+        <div class="result-head">
+          <div class="result-badge">🧸 Kinderleicht</div>
+          <div class="result-src">aus deiner Markierung</div>
+        </div>
+
+        <div class="result-body">
+          <p>Stell dir vor, du willst erraten, wie groß jemand ist – und darfst dafür Hinweise benutzen, zum Beispiel wie groß die Eltern sind.</p>
+
+          <p>R² sagt dir einfach: <strong>Wie gut sind meine Hinweise?</strong> Ist R² hoch, helfen die Hinweise super beim Raten. Ist es niedrig, rätst du fast nur zufällig.</p>
+
+          <p>Das „korrigierte R²" ist wie ein ehrlicher Freund, der sagt: „Übertreib nicht – bei neuen Leuten klappt dein Raten etwas schlechter, als du denkst."</p>
+        </div>
+
+        <div class="orig-box">
+          <div class="ol">Original aus der PDF</div>
+          <div class="ot">„Der Determinationskoeffizient R² quantifiziert den Anteil der Varianz der abhängigen Variable…"</div>
+        </div>
+
+        <div class="result-actions">
+          <button class="btn btn-dark">Alle 3 Stufen zeigen</button>
+          <button class="btn btn-ghost">Kopieren</button>
+          <button class="btn btn-ghost">Nochmal</button>
+        </div>
+      </div>
+
+      <div class="fun-card">
+        <span class="emoji">🚀</span>
+        <div>
+          <div class="fc-title">3 Konzepte heute verstanden</div>
+          <div class="fc-sub">Weiter so – Klausur in 12 Tagen</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="note">Design v3 — heller, verspielter SaaS-Look</div>
+
+</div>
+</body>
+</html>
