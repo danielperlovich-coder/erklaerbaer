@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/explain.js": {
+      "maxDuration": 60
+    }
+  }
+}

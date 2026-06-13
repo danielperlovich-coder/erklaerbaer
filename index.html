@@ -262,6 +262,36 @@
     letter-spacing: 0.08em;
   }
 
+  /* ── Language row ── */
+  .lang-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .lang-row label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+  .lang-row select {
+    font-family: 'Inter', inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    padding: 7px 14px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .lang-row select:focus {
+    border-color: rgba(22,21,26,0.35);
+    box-shadow: 0 0 0 3px rgba(22,21,26,0.05);
+  }
+
   /* ── Level cards ── */
   .levels {
     display: grid;
@@ -610,6 +640,16 @@
     <div class="section" style="margin-bottom:0">
       <span class="step-deco" aria-hidden="true">03</span>
       <span class="section-label">Erklärung abrufen</span>
+      <div class="lang-row">
+        <label for="langSelect">🌐 Sprache</label>
+        <select id="langSelect">
+          <option value="Deutsch" selected>🇩🇪 Deutsch</option>
+          <option value="Englisch">🇬🇧 English</option>
+          <option value="Russisch">🇷🇺 Русский</option>
+          <option value="Spanisch">🇪🇸 Español</option>
+          <option value="Französisch">🇫🇷 Français</option>
+        </select>
+      </div>
       <div class="cta-hint" id="ctaHint">💬 Alltagstauglich ausgewählt</div>
       <button class="go-btn" id="goBtn" disabled>Erklär's mir →</button>
     </div>
@@ -642,6 +682,24 @@
   let allMode = false;
   let pdfB64 = null;
 
+  // "Gleiche Ebene" ergibt im Thema-Modus keinen Sinn (keine Referenz-PDF).
+  // Daher dort ausblenden und ggf. auf "Alltagstauglich" zurückfallen.
+  function applyModeVisibility() {
+    const card = document.querySelector('[data-level="gleiche_ebene"]');
+    if (!card) return;
+    if (mode === 'topic') {
+      card.style.display = 'none';
+      if (selectedLevel === 'gleiche_ebene' && !allMode) {
+        selectedLevel = 'alltagstauglich';
+        document.querySelectorAll('.level-card').forEach(c =>
+          c.classList.toggle('active', c.dataset.level === 'alltagstauglich'));
+        updateHint();
+      }
+    } else {
+      card.style.display = '';
+    }
+  }
+
   function updateHint() {
     const hint = document.getElementById('ctaHint');
     if (allMode) {
@@ -660,6 +718,7 @@
       mode = tab.dataset.mode;
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       document.getElementById('panel-' + mode).classList.add('active');
+      applyModeVisibility();
       checkReady();
     });
   });
@@ -700,8 +759,10 @@
   fileInput.addEventListener('change', e => { if (e.target.files[0]) loadPDF(e.target.files[0]); });
 
   function loadPDF(file) {
-    if (file.size > 8 * 1024 * 1024) {
-      showError('PDF zu groß (max 8 MB). Tipp: Nur die relevanten Seiten exportieren.');
+    // 4 MB Grenze: Vercel erlaubt max ~4,5 MB Request-Body. Base64 bläht
+    // die Datei um ~33% auf, daher hier sicher bei 4 MB Originaldatei kappen.
+    if (file.size > 4 * 1024 * 1024) {
+      showError('PDF zu groß (max 4 MB). Tipp: Nur die relevanten Seiten exportieren.');
       return;
     }
     const r = new FileReader();
@@ -764,6 +825,7 @@
     const payload = {
       levels:  levelsToFetch,
       mode,
+      language: document.getElementById('langSelect').value,
       topic:   mode === 'topic' ? document.getElementById('topicInput').value.trim() : null,
       passage: mode === 'pdf'   ? document.getElementById('passageInput').value.trim() : null,
       pdf:     mode === 'pdf'   ? pdfB64 : null
@@ -816,6 +878,7 @@
     }
   });
 
+  applyModeVisibility();
   updateHint();
 </script>
 </body>
