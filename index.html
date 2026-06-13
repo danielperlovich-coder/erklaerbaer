@@ -564,6 +564,173 @@
     .level-card .lname { font-size: 11px; }
     .level-card .ldesc { display: none; }
   }
+  /* ══════════ READER (Phase 4) ══════════ */
+  .reader {
+    position: fixed;
+    inset: 0;
+    background: var(--page);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+  }
+  .reader.open { display: flex; }
+
+  .reader-top {
+    background: var(--ink);
+    color: #fff;
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  .reader-top .r-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 16px;
+  }
+  .reader-top .r-mark {
+    width: 32px; height: 32px; background: var(--green);
+    border-radius: 10px; display: grid; place-items: center; font-size: 17px;
+  }
+  .reader-top .r-doc {
+    font-size: 12px; color: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.08);
+    padding: 6px 13px; border-radius: 99px;
+    max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .r-badge {
+    margin-left: auto;
+    font-size: 12px; font-weight: 600;
+    background: var(--purple-soft); color: #6d28d9;
+    padding: 6px 13px; border-radius: 99px;
+    white-space: nowrap;
+  }
+  .r-badge.detecting { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); }
+  .r-close {
+    background: rgba(255,255,255,0.1); color: #fff;
+    border: none; border-radius: 9px;
+    padding: 7px 14px; font-size: 13px; font-family: inherit; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .r-close:hover { background: rgba(255,255,255,0.2); }
+
+  .reader-split { display: flex; flex: 1; overflow: hidden; }
+
+  /* Left: extracted text */
+  .r-text-side {
+    flex: 1.15;
+    overflow-y: auto;
+    padding: 2rem;
+    display: flex; justify-content: center;
+  }
+  .r-paper {
+    background: var(--card);
+    max-width: 680px; width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(22,21,26,0.08);
+    padding: 2.75rem 3rem;
+    font-size: 15px; line-height: 1.85; color: var(--ink);
+  }
+  .r-page-block { margin-bottom: 1.75rem; }
+  .r-page-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--ink-3); margin-bottom: 8px;
+    user-select: none;
+  }
+  .r-paper p { margin-bottom: 0.75rem; }
+  .r-paper ::selection { background: rgba(52,199,89,0.28); }
+
+  /* Floating "Erklären" button on selection */
+  .r-pop {
+    position: fixed;
+    z-index: 200;
+    background: var(--ink); color: #fff;
+    font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 600;
+    padding: 8px 15px; border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(22,21,26,0.35);
+    cursor: pointer; display: none;
+    transform: translate(-50%, -120%);
+  }
+  .r-pop.show { display: block; animation: fadeUp 0.18s ease both; }
+  .r-pop:hover { background: #000; }
+
+  /* Right: explanation panel */
+  .r-panel-side {
+    flex: 1;
+    background: var(--bg);
+    border-left: 1px solid var(--line);
+    display: flex; flex-direction: column;
+    min-width: 360px; max-width: 480px;
+    overflow: hidden;
+  }
+  .r-panel-head {
+    padding: 1rem 1.25rem 0.85rem;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+    background: var(--card);
+  }
+  .r-panel-head .r-title {
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 14px;
+    margin-bottom: 11px;
+  }
+  .r-controls { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+  .r-pill {
+    font-size: 12px; font-weight: 600;
+    padding: 7px 12px; border-radius: 99px;
+    border: 1.5px solid var(--line); background: var(--card);
+    color: var(--ink-2); cursor: pointer; transition: all 0.15s;
+  }
+  .r-pill:hover { border-color: var(--ink-3); }
+  .r-pill.active { background: var(--purple-soft); border-color: var(--purple); color: #6d28d9; }
+  .r-lang {
+    margin-left: auto;
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    border: 1.5px solid var(--line); border-radius: 99px;
+    padding: 6px 11px; background: var(--card); color: var(--ink); cursor: pointer; outline: none;
+  }
+
+  .r-panel-body { flex: 1; overflow-y: auto; padding: 1.1rem 1.25rem; }
+  .r-empty {
+    text-align: center; color: var(--ink-3); font-size: 13px;
+    padding: 2.5rem 1rem; line-height: 1.6;
+  }
+  .r-empty .big { font-size: 30px; display: block; margin-bottom: 10px; opacity: 0.5; }
+
+  .r-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left-width: 4px;
+    border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 13px;
+    animation: fadeUp 0.32s ease both;
+  }
+  .r-quote {
+    font-size: 12px; color: var(--ink-2);
+    border-left: 3px solid var(--green);
+    padding-left: 10px; margin-bottom: 11px;
+    line-height: 1.55; font-style: italic;
+    max-height: 64px; overflow: hidden;
+  }
+  .r-card-tag {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 3px 9px; border-radius: 6px; margin-bottom: 9px;
+  }
+  .r-card-body { font-size: 13.5px; line-height: 1.7; color: var(--ink); white-space: pre-wrap; }
+  .r-card.loading-card .r-card-body { color: var(--ink-3); }
+
+  /* skeleton lines while loading */
+  .r-skel { height: 11px; border-radius: 6px; margin-bottom: 8px;
+    background: linear-gradient(90deg, var(--line) 25%, var(--bg) 50%, var(--line) 75%);
+    background-size: 200% 100%; animation: shimmer 1.3s infinite; }
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  @media (max-width: 760px) {
+    .reader-split { flex-direction: column; }
+    .r-text-side { padding: 1rem; flex: none; max-height: 45vh; }
+    .r-paper { padding: 1.5rem 1.25rem; }
+    .r-panel-side { max-width: none; min-width: 0; border-left: none; border-top: 1px solid var(--line); }
+  }
 </style>
 </head>
 <body>
@@ -614,7 +781,7 @@
       <span class="step-deco" aria-hidden="true">02</span>
       <span class="section-label">Erklär-Level wählen</span>
       <div class="levels" id="levels">
-        <div class="level-card c-2" data-level="gleiche_ebene">
+        <div class="level-card c-2" id="firstLevelCard" data-level="gleiche_ebene">
           <div class="swatch"></div>
           <span class="emoji">📖</span>
           <span class="lname">Gleiche Ebene</span>
@@ -633,7 +800,7 @@
           <span class="ldesc">Ganz simpel</span>
         </div>
       </div>
-      <button class="all-btn" id="allBtn">✨ Alle 3 Level gleichzeitig anzeigen</button>
+      <button class="all-btn" id="allBtn">✨ Alle Level gleichzeitig anzeigen</button>
     </div>
 
     <!-- 03 — Go -->
@@ -670,9 +837,55 @@
   </div>
 </div>
 
+<!-- ══════════ READER OVERLAY (Phase 4) ══════════ -->
+<div class="reader" id="reader">
+  <div class="reader-top">
+    <div class="r-brand"><span class="r-mark">🐻</span> Erklärbär</div>
+    <span class="r-doc" id="rDoc">dokument.pdf</span>
+    <span class="r-badge detecting" id="rBadge">📊 Niveau wird erkannt…</span>
+    <button class="r-close" id="rClose">← Zurück</button>
+  </div>
+  <div class="reader-split">
+    <div class="r-text-side" id="rTextSide">
+      <div class="r-paper" id="rPaper"></div>
+    </div>
+    <div class="r-panel-side">
+      <div class="r-panel-head">
+        <div class="r-title">Erklärungen</div>
+        <div class="r-controls">
+          <button class="r-pill" data-rlevel="gleiche_ebene">📖 Gleiche Ebene</button>
+          <button class="r-pill active" data-rlevel="alltagstauglich">💬 Alltag</button>
+          <button class="r-pill" data-rlevel="kinderleicht">🧸 Kinderleicht</button>
+          <select class="r-lang" id="rLang">
+            <option value="Deutsch" selected>🇩🇪 DE</option>
+            <option value="Englisch">🇬🇧 EN</option>
+            <option value="Russisch">🇷🇺 RU</option>
+            <option value="Spanisch">🇪🇸 ES</option>
+            <option value="Französisch">🇫🇷 FR</option>
+          </select>
+        </div>
+      </div>
+      <div class="r-panel-body" id="rPanelBody">
+        <div class="r-empty" id="rEmpty">
+          <span class="big">✍️</span>
+          Markiere eine Textstelle links mit der Maus –
+          die Erklärung erscheint hier.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Floating selection button -->
+<div class="r-pop" id="rPop">✨ Erklären</div>
+
+<!-- PDF.js für Text-Extraktion -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
 <script>
   const LEVELS = {
     gleiche_ebene:  { emoji: '📖', label: 'Gleiche Ebene',  sub: 'Sprache vereinfacht', border: '#8b5cf6' },
+    fachlich:       { emoji: '📚', label: 'Fachlich',        sub: 'Anspruchsvoll erklärt', border: '#8b5cf6' },
     alltagstauglich:{ emoji: '💬', label: 'Alltagstauglich',sub: 'Für alle verständlich',border: '#f5c518' },
     kinderleicht:   { emoji: '🧸', label: 'Kinderleicht',   sub: 'Ganz simpel',         border: '#34c759' }
   };
@@ -682,28 +895,37 @@
   let allMode = false;
   let pdfB64 = null;
 
-  // "Gleiche Ebene" ergibt im Thema-Modus keinen Sinn (keine Referenz-PDF).
-  // Daher dort ausblenden und ggf. auf "Alltagstauglich" zurückfallen.
-  function applyModeVisibility() {
-    const card = document.querySelector('[data-level="gleiche_ebene"]');
+  // Erste Karte je Modus umschalten:
+  // Thema-Modus -> "Fachlich" (kein Referenzdokument nötig)
+  // PDF-Modus   -> "Gleiche Ebene" (braucht das Dokument als Referenz)
+  function applyModeLevels() {
+    const card = document.getElementById('firstLevelCard');
     if (!card) return;
+    const emoji = card.querySelector('.emoji');
+    const name  = card.querySelector('.lname');
+    const desc  = card.querySelector('.ldesc');
+    const wasFirstSelected = (selectedLevel === 'gleiche_ebene' || selectedLevel === 'fachlich');
+
     if (mode === 'topic') {
-      card.style.display = 'none';
-      if (selectedLevel === 'gleiche_ebene' && !allMode) {
-        selectedLevel = 'alltagstauglich';
-        document.querySelectorAll('.level-card').forEach(c =>
-          c.classList.toggle('active', c.dataset.level === 'alltagstauglich'));
-        updateHint();
-      }
+      card.dataset.level = 'fachlich';
+      emoji.textContent = '📚';
+      name.textContent  = 'Fachlich';
+      desc.textContent  = 'Anspruchsvoll erklärt';
+      if (wasFirstSelected) selectedLevel = 'fachlich';
     } else {
-      card.style.display = '';
+      card.dataset.level = 'gleiche_ebene';
+      emoji.textContent = '📖';
+      name.textContent  = 'Gleiche Ebene';
+      desc.textContent  = 'Sprache vereinfacht';
+      if (wasFirstSelected) selectedLevel = 'gleiche_ebene';
     }
+    updateHint();
   }
 
   function updateHint() {
     const hint = document.getElementById('ctaHint');
     if (allMode) {
-      hint.textContent = 'Alle 3 Level werden erklärt';
+      hint.textContent = 'Alle Level werden erklärt';
     } else {
       const m = LEVELS[selectedLevel];
       hint.textContent = `${m.emoji} ${m.label} ausgewählt`;
@@ -718,7 +940,7 @@
       mode = tab.dataset.mode;
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       document.getElementById('panel-' + mode).classList.add('active');
-      applyModeVisibility();
+      applyModeLevels();
       checkReady();
     });
   });
@@ -765,6 +987,7 @@
       showError('PDF zu groß (max 4 MB). Tipp: Nur die relevanten Seiten exportieren.');
       return;
     }
+    // Base64 weiterhin speichern (Fallback: Gesamt-Zusammenfassung via "Erklär's mir")
     const r = new FileReader();
     r.onload = ev => {
       pdfB64 = ev.target.result.split(',')[1];
@@ -774,6 +997,8 @@
       checkReady();
     };
     r.readAsDataURL(file);
+    // Hauptweg: Text extrahieren und Reader öffnen
+    openReaderFromFile(file);
   }
 
   document.getElementById('topicInput').addEventListener('input', checkReady);
@@ -820,7 +1045,11 @@
       document.getElementById('loadMsg').textContent = loadMsgs[msgI];
     }, 2500);
 
-    const levelsToFetch = allMode ? Object.keys(LEVELS) : [selectedLevel];
+    const TOPIC_LEVELS = ['fachlich', 'alltagstauglich', 'kinderleicht'];
+    const PDF_LEVELS   = ['gleiche_ebene', 'alltagstauglich', 'kinderleicht'];
+    const levelsToFetch = allMode
+      ? (mode === 'topic' ? TOPIC_LEVELS : PDF_LEVELS)
+      : [selectedLevel];
 
     const payload = {
       levels:  levelsToFetch,
@@ -878,7 +1107,215 @@
     }
   });
 
-  applyModeVisibility();
+  // ══════════ READER (Phase 4) ══════════
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
+  let readerLevel = 'alltagstauglich';
+  let detectedNiveau = null;
+
+  const READER_LEVELS = {
+    gleiche_ebene:  { emoji:'📖', label:'Gleiche Ebene',  border:'#8b5cf6' },
+    alltagstauglich:{ emoji:'💬', label:'Alltagstauglich', border:'#f5c518' },
+    kinderleicht:   { emoji:'🧸', label:'Kinderleicht',   border:'#34c759' }
+  };
+
+  async function openReaderFromFile(file) {
+    const reader = document.getElementById('reader');
+    const paper  = document.getElementById('rPaper');
+    const badge  = document.getElementById('rBadge');
+    document.getElementById('rDoc').textContent = file.name;
+
+    paper.innerHTML = '<div class="r-empty">📄 Text wird extrahiert…</div>';
+    badge.className = 'r-badge detecting';
+    badge.textContent = '📊 Niveau wird erkannt…';
+    badge.style.display = '';
+    document.getElementById('rPanelBody').innerHTML =
+      '<div class="r-empty" id="rEmpty"><span class="big">✍️</span>Markiere eine Textstelle links mit der Maus – die Erklärung erscheint hier.</div>';
+    detectedNiveau = null;
+    reader.classList.add('open');
+
+    let pages;
+    try {
+      pages = await extractPdfText(file);
+    } catch (e) {
+      reader.classList.remove('open');
+      showError('PDF konnte nicht gelesen werden: ' + (e.message || e));
+      return;
+    }
+
+    const fullText = pages.join('\n').trim();
+    if (fullText.replace(/\s/g, '').length < 50) {
+      reader.classList.remove('open');
+      showError('Diese PDF enthält keinen auswählbaren Text (vermutlich ein Scan). Der Reader braucht echten Text.');
+      return;
+    }
+
+    renderPaper(pages);
+    detectNiveau(fullText);
+  }
+
+  async function extractPdfText(file) {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const pages = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      // Zeilen anhand der vertikalen Position rekonstruieren
+      let lines = [], lastY = null, cur = '';
+      for (const it of content.items) {
+        const y = it.transform[5];
+        if (lastY !== null && Math.abs(y - lastY) > 4) { lines.push(cur); cur = ''; }
+        cur += it.str + (it.hasEOL ? '' : ' ');
+        lastY = y;
+      }
+      if (cur.trim()) lines.push(cur);
+      pages.push(lines.join('\n').replace(/[ ]{2,}/g, ' ').trim());
+    }
+    return pages;
+  }
+
+  function renderPaper(pages) {
+    const paper = document.getElementById('rPaper');
+    paper.innerHTML = '';
+    pages.forEach((txt, idx) => {
+      const block = document.createElement('div');
+      block.className = 'r-page-block';
+      const label = document.createElement('div');
+      label.className = 'r-page-label';
+      label.textContent = 'Seite ' + (idx + 1);
+      block.appendChild(label);
+      txt.split('\n').forEach(line => {
+        if (!line.trim()) return;
+        const p = document.createElement('p');
+        p.textContent = line;
+        block.appendChild(p);
+      });
+      paper.appendChild(block);
+    });
+  }
+
+  async function detectNiveau(text) {
+    const badge = document.getElementById('rBadge');
+    try {
+      const resp = await fetch('/api/detect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.slice(0, 6000) })
+      });
+      if (!resp.ok) throw new Error();
+      const data = await resp.json();
+      detectedNiveau = data.niveau || null;
+      badge.className = 'r-badge';
+      badge.textContent = detectedNiveau ? ('📊 Erkannt: ' + detectedNiveau) : '📊 Niveau unbekannt';
+    } catch {
+      badge.className = 'r-badge';
+      badge.textContent = '📊 Niveau unbekannt';
+    }
+  }
+
+  // Level-Pills im Reader
+  document.querySelectorAll('.r-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.r-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      readerLevel = pill.dataset.rlevel;
+    });
+  });
+
+  // Reader schließen
+  document.getElementById('rClose').addEventListener('click', () => {
+    document.getElementById('reader').classList.remove('open');
+    hidePop();
+  });
+
+  // Markierung → schwebender Button
+  const rPop = document.getElementById('rPop');
+  let pendingSelection = '';
+
+  document.getElementById('rTextSide').addEventListener('mouseup', () => {
+    setTimeout(() => {
+      const sel = window.getSelection();
+      const text = sel ? sel.toString().trim() : '';
+      if (text.length > 8 && sel.rangeCount > 0) {
+        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        pendingSelection = text;
+        rPop.style.left = (rect.left + rect.width / 2) + 'px';
+        rPop.style.top  = rect.top + 'px';
+        rPop.classList.add('show');
+      } else {
+        hidePop();
+      }
+    }, 10);
+  });
+
+  function hidePop() { rPop.classList.remove('show'); }
+
+  document.addEventListener('mousedown', (e) => {
+    if (e.target !== rPop) hidePop();
+  });
+
+  rPop.addEventListener('click', () => {
+    const text = pendingSelection;
+    hidePop();
+    window.getSelection().removeAllRanges();
+    if (text) explainMarked(text);
+  });
+
+  async function explainMarked(markedText) {
+    const body  = document.getElementById('rPanelBody');
+    const empty = document.getElementById('rEmpty');
+    if (empty) empty.remove();
+
+    const lvl = READER_LEVELS[readerLevel];
+    const tagBg = readerLevel === 'kinderleicht' ? 'var(--green-soft)' :
+                  readerLevel === 'alltagstauglich' ? 'var(--yellow-soft)' : 'var(--purple-soft)';
+    const tagColor = readerLevel === 'kinderleicht' ? 'var(--green-deep)' :
+                     readerLevel === 'alltagstauglich' ? '#8a6d00' : '#6d28d9';
+
+    const card = document.createElement('div');
+    card.className = 'r-card loading-card';
+    card.style.borderLeftColor = lvl.border;
+    card.innerHTML =
+      '<div class="r-quote">„' + escapeHtml(markedText.slice(0, 180)) + (markedText.length > 180 ? '…' : '') + '"</div>' +
+      '<span class="r-card-tag" style="background:' + tagBg + ';color:' + tagColor + '">' + lvl.emoji + ' ' + lvl.label + '</span>' +
+      '<div class="r-card-body"><div class="r-skel" style="width:95%"></div><div class="r-skel" style="width:88%"></div><div class="r-skel" style="width:70%"></div></div>';
+    body.prepend(card);
+
+    try {
+      const resp = await fetch('/api/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          levels: [readerLevel],
+          mode: 'marked',
+          markedText,
+          detectedNiveau,
+          language: document.getElementById('rLang').value
+        })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || ('Server-Fehler ' + resp.status));
+      }
+      const data = await resp.json();
+      const text = (data.explanations && data.explanations[readerLevel]) || '–';
+      card.classList.remove('loading-card');
+      card.querySelector('.r-card-body').textContent = text;
+    } catch (e) {
+      card.classList.remove('loading-card');
+      card.querySelector('.r-card-body').textContent = '⚠️ ' + (e.message || 'Fehler');
+    }
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  applyModeLevels();
   updateHint();
 </script>
 </body>

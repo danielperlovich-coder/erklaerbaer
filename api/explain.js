@@ -21,6 +21,14 @@ Schritt 2 – Erklärung auf gleichem Niveau, aber zugänglicherer Sprache:
 - Wie ein erfahrener Autor der einen Fachtext redigiert: präzise, aber lesbar
 - Schließe IMMER ein konkretes Beispiel auf genau diesem Fachniveau ein, eingeleitet mit "Beispiel:". Das Beispiel soll fachadäquat sein und das Konzept illustrieren.`,
 
+  fachlich: `Erkläre auf fachlich anspruchsvollem Niveau für jemanden mit Vorbildung:
+- Nutze die korrekte Fachterminologie, ohne sie zu verwässern
+- Geh in die Tiefe: Mechanismen, Zusammenhänge, das "Warum" dahinter
+- Benenne relevante Nuancen, Grenzfälle oder offene Fragen im Feld
+- Ordne das Konzept in den größeren fachlichen Kontext ein
+- Präzise und dicht, wie ein Fachvortrag für Kolleg:innen
+- Schließe IMMER ein fachadäquates Beispiel ein, eingeleitet mit "Beispiel:".`,
+
   alltagstauglich: `Erkläre so, dass jeder Erwachsene es ohne Fachkenntnisse versteht:
 - Ersetze alle Fachbegriffe durch Alltagssprache oder erkläre sie sofort mit einem konkreten Beispiel
 - Nutze Vergleiche aus dem Alltag (Haushalt, Arbeit, Einkaufen, Familie)
