@@ -1179,49 +1179,52 @@
   // Rendert eine PDF-Seite als Bild (canvas) + unsichtbare Textschicht zum Markieren.
   async function renderPage(page, container) {
     const side = document.getElementById('rTextSide');
-    const targetWidth = Math.max(280, Math.min((side.clientWidth || 700) - 64, 700));
+    const targetWidth = Math.max(280, Math.min((side.clientWidth || 700) - 56, 760));
     const base = page.getViewport({ scale: 1 });
     const scale = targetWidth / base.width;
     const viewport = page.getViewport({ scale });
+    const w = Math.floor(viewport.width);
+    const h = Math.floor(viewport.height);
 
     const pageDiv = document.createElement('div');
     pageDiv.className = 'pdf-page';
-    pageDiv.style.width  = viewport.width + 'px';
-    pageDiv.style.height = viewport.height + 'px';
+    pageDiv.style.width  = w + 'px';
+    pageDiv.style.height = h + 'px';
 
     const canvas = document.createElement('canvas');
-    const ratio = window.devicePixelRatio || 1;
-    canvas.width  = Math.floor(viewport.width  * ratio);
-    canvas.height = Math.floor(viewport.height * ratio);
-    canvas.style.width  = viewport.width + 'px';
-    canvas.style.height = viewport.height + 'px';
+    canvas.width  = w;          // Backing-Store = Anzeigegröße (keine DPR-Skalierung)
+    canvas.height = h;
+    canvas.style.display = 'block';
+    canvas.style.width  = w + 'px';
+    canvas.style.height = h + 'px';
     pageDiv.appendChild(canvas);
 
     const tl = document.createElement('div');
     tl.className = 'textLayer';
     tl.style.setProperty('--scale-factor', scale);
-    tl.style.width  = viewport.width + 'px';
-    tl.style.height = viewport.height + 'px';
+    tl.style.width  = w + 'px';
+    tl.style.height = h + 'px';
     pageDiv.appendChild(tl);
 
     container.appendChild(pageDiv);
 
+    // Bild zeichnen (das ist das Wichtigste)
     const ctx = canvas.getContext('2d');
-    await page.render({
-      canvasContext: ctx,
-      viewport,
-      transform: ratio !== 1 ? [ratio, 0, 0, ratio, 0, 0] : undefined
-    }).promise;
+    await page.render({ canvasContext: ctx, viewport }).promise;
 
-    const textContent = await page.getTextContent();
-    await pdfjsLib.renderTextLayer({
-      textContentSource: textContent,
-      container: tl,
-      viewport,
-      textDivs: []
-    }).promise;
-
-    return textContent.items.map(it => it.str).join(' ');
+    // Textschicht separat – ein Fehler hier darf das Bild NICHT blockieren
+    try {
+      const textContent = await page.getTextContent();
+      await pdfjsLib.renderTextLayer({
+        textContentSource: textContent,
+        container: tl,
+        viewport,
+        textDivs: []
+      }).promise;
+      return textContent.items.map(it => it.str).join(' ');
+    } catch (e) {
+      return '';
+    }
   }
 
   async function detectNiveau(text) {
