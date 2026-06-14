@@ -1110,10 +1110,13 @@
   });
 
   // ══════════ READER (Phase 4) ══════════
+  console.log('Erklärbär build: reader-img-v6');
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
+
+  let readerBusy = false;
 
   let detectedNiveau = null;
   let lastLevels = null;     // aktuell angezeigte Level (für Sprach-Umschaltung)
@@ -1126,6 +1129,16 @@
   };
 
   async function openReaderFromFile(file) {
+    if (readerBusy) return;   // verhindert doppeltes Laden, das sich selbst leeren würde
+    readerBusy = true;
+    try {
+      await renderReader(file);
+    } finally {
+      readerBusy = false;
+    }
+  }
+
+  async function renderReader(file) {
     const reader = document.getElementById('reader');
     const paper  = document.getElementById('rPaper');
     const badge  = document.getElementById('rBadge');
