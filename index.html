@@ -638,7 +638,7 @@
     box-shadow: 0 4px 20px rgba(22,21,26,0.14);
     overflow: hidden;
   }
-  .pdf-page canvas { display: block; }
+  .pdf-page canvas, .pdf-page img { display: block; }
 
   /* PDF.js Textschicht – unsichtbarer, markierbarer Text über dem Bild */
   .textLayer {
@@ -1190,14 +1190,23 @@
     pageDiv.className = 'pdf-page';
     pageDiv.style.width  = w + 'px';
     pageDiv.style.height = h + 'px';
+    container.appendChild(pageDiv);
 
+    // Offscreen-Canvas rendern (NICHT ins DOM hängen) – wird danach als Bild eingesetzt.
+    // Grund: Viele dauerhaft im DOM liegende Canvas würden von Chrome aus dem Speicher
+    // geworfen und weiß werden. Ein <img> belegt keinen Canvas-Speicher.
     const canvas = document.createElement('canvas');
-    canvas.width  = w;          // Backing-Store = Anzeigegröße (keine DPR-Skalierung)
+    canvas.width  = w;
     canvas.height = h;
-    canvas.style.display = 'block';
-    canvas.style.width  = w + 'px';
-    canvas.style.height = h + 'px';
-    pageDiv.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    const img = document.createElement('img');
+    img.src = canvas.toDataURL('image/png');
+    img.width = w;
+    img.height = h;
+    img.style.display = 'block';
+    pageDiv.appendChild(img);
 
     const tl = document.createElement('div');
     tl.className = 'textLayer';
@@ -1205,12 +1214,6 @@
     tl.style.width  = w + 'px';
     tl.style.height = h + 'px';
     pageDiv.appendChild(tl);
-
-    container.appendChild(pageDiv);
-
-    // Bild zeichnen (das ist das Wichtigste)
-    const ctx = canvas.getContext('2d');
-    await page.render({ canvasContext: ctx, viewport }).promise;
 
     // Textschicht separat – ein Fehler hier darf das Bild NICHT blockieren
     try {
