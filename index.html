@@ -636,7 +636,6 @@
     background: #fff;
     border-radius: 4px;
     box-shadow: 0 4px 20px rgba(22,21,26,0.14);
-    overflow: hidden;
   }
   .pdf-page canvas, .pdf-page img { display: block; }
 
@@ -1110,7 +1109,7 @@
   });
 
   // ══════════ READER (Phase 4) ══════════
-  console.log('Erklärbär build: reader-img-v6');
+  console.log('Erklärbär build: reader-img-v7');
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1168,9 +1167,14 @@
     paper.innerHTML = '';
     let fullText = '';
     try {
+      // Breite EINMAL stabil bestimmen -> alle Seiten gleich skaliert (kein Abschneiden)
+      const targetWidth = Math.max(280, Math.min((paper.clientWidth || 700) - 4, 820));
+      // EIN einziges Canvas für alle Seiten wiederverwenden -> kein Speicherproblem
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
-        const pageText = await renderPage(page, paper);
+        const pageText = await renderPage(page, paper, targetWidth, canvas, ctx);
         fullText += pageText + '\n';
       }
     } catch (e) {
@@ -1189,36 +1193,31 @@
     detectNiveau(fullText);
   }
 
-  // Rendert eine PDF-Seite als Bild (canvas) + unsichtbare Textschicht zum Markieren.
-  async function renderPage(page, container) {
-    const side = document.getElementById('rTextSide');
-    const targetWidth = Math.max(280, Math.min((side.clientWidth || 700) - 56, 760));
+  // Rendert eine PDF-Seite als Bild + unsichtbare Textschicht zum Markieren.
+  // Nutzt ein gemeinsames Canvas (canvas/ctx) und eine fixe Zielbreite.
+  async function renderPage(page, container, targetWidth, canvas, ctx) {
     const base = page.getViewport({ scale: 1 });
     const scale = targetWidth / base.width;
     const viewport = page.getViewport({ scale });
     const w = Math.floor(viewport.width);
     const h = Math.floor(viewport.height);
 
+    // Gemeinsames Canvas auf Seitengröße setzen (das löscht es zugleich)
+    canvas.width  = w;
+    canvas.height = h;
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    const dataUrl = canvas.toDataURL('image/png');
+
     const pageDiv = document.createElement('div');
     pageDiv.className = 'pdf-page';
     pageDiv.style.width  = w + 'px';
     pageDiv.style.height = h + 'px';
-    container.appendChild(pageDiv);
-
-    // Offscreen-Canvas rendern (NICHT ins DOM hängen) – wird danach als Bild eingesetzt.
-    // Grund: Viele dauerhaft im DOM liegende Canvas würden von Chrome aus dem Speicher
-    // geworfen und weiß werden. Ein <img> belegt keinen Canvas-Speicher.
-    const canvas = document.createElement('canvas');
-    canvas.width  = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    await page.render({ canvasContext: ctx, viewport }).promise;
 
     const img = document.createElement('img');
-    img.src = canvas.toDataURL('image/png');
-    img.width = w;
-    img.height = h;
+    img.src = dataUrl;
     img.style.display = 'block';
+    img.style.width  = w + 'px';
+    img.style.height = h + 'px';
     pageDiv.appendChild(img);
 
     const tl = document.createElement('div');
@@ -1227,6 +1226,8 @@
     tl.style.width  = w + 'px';
     tl.style.height = h + 'px';
     pageDiv.appendChild(tl);
+
+    container.appendChild(pageDiv);
 
     // Textschicht separat – ein Fehler hier darf das Bild NICHT blockieren
     try {
