@@ -144,12 +144,26 @@ Markierter Originaltext:\n"""\n${markedText}\n"""`;
       : `Erkläre das zentrale Thema / die Kernkonzepte der beigefügten PDF`;
   }
 
+  // --- Modell & Token-Budget je Level ---
+  // Einfache Level nutzen das schnelle Haiku-Modell, Fachlich das stärkere Sonnet.
+  // Weniger max_tokens = schnellere Generierung (reicht für eine Erklärung + Beispiel).
+  const LEVEL_CONFIG = {
+    fachlich:        { model: 'claude-sonnet-4-6',         max_tokens: 900 },
+    gleiche_ebene:   { model: 'claude-sonnet-4-6',         max_tokens: 900 },
+    alltagstauglich: { model: 'claude-haiku-4-5-20251001', max_tokens: 650 },
+    kinderleicht:    { model: 'claude-haiku-4-5-20251001', max_tokens: 450 },
+    marked_kinderleicht:     { model: 'claude-haiku-4-5-20251001', max_tokens: 450 },
+    marked_deutlich_einfacher:{ model: 'claude-haiku-4-5-20251001', max_tokens: 600 },
+    marked_etwas_einfacher:  { model: 'claude-sonnet-4-6',         max_tokens: 700 }
+  };
+
   // --- Alle gewünschten Level parallel anfragen ---
   const requests = levels.map(async (lvl) => {
     const levelPrompt = LEVEL_PROMPTS[lvl];
     if (!levelPrompt) {
       throw new Error(`Unbekanntes Level: ${lvl}`);
     }
+    const cfg = LEVEL_CONFIG[lvl] || { model: 'claude-sonnet-4-6', max_tokens: 800 };
 
     const content = [];
     if (mode === 'pdf' && pdf) {
@@ -160,12 +174,12 @@ Markierter Originaltext:\n"""\n${markedText}\n"""`;
     }
     content.push({
       type: 'text',
-      text: `${baseInstruction}\n\n${levelPrompt}\n\nAntworte auf ${language}. Auch das Beispiel muss im Sprach- und Kulturraum von ${language} verständlich sein – nicht aus dem Deutschen übersetzt, sondern für diese Sprache neu gedacht. Gib NUR die Erklärung aus, ohne Einleitung wie "Gerne erkläre ich..." und ohne Meta-Kommentare.`
+      text: `${baseInstruction}\n\n${levelPrompt}\n\nAntworte auf ${language}. Auch das Beispiel muss im Sprach- und Kulturraum von ${language} verständlich sein – nicht aus dem Deutschen übersetzt, sondern für diese Sprache neu gedacht. Verwende KEINE Markdown-Formatierung: keine Sternchen (* oder **), keine Rauten (#), keine Backticks. Schreibe in normalen Sätzen und Absätzen. Das Beispiel bleibt erhalten, eingeleitet mit "Beispiel:". Gib NUR die Erklärung aus, ohne Einleitung wie "Gerne erkläre ich..." und ohne Meta-Kommentare.`
     });
 
     const resp = await callAnthropic({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1000,
+      model: cfg.model,
+      max_tokens: cfg.max_tokens,
       messages: [{ role: 'user', content }]
     }, apiKey);
 
