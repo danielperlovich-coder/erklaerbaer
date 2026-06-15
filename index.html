@@ -577,6 +577,31 @@
     white-space: nowrap;
   }
   .r-badge.detecting { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); }
+
+  /* Text/Bild-Umschalter im Reader */
+  .r-modetoggle { display: inline-flex; background: rgba(255,255,255,0.1); border-radius: 9px; padding: 3px; gap: 2px; }
+  .rm-opt {
+    font-family: 'Bricolage Grotesque', sans-serif; font-size: 12px; font-weight: 600;
+    color: rgba(255,255,255,0.6); background: transparent; border: none;
+    padding: 6px 11px; border-radius: 7px; cursor: pointer; white-space: nowrap;
+  }
+  .rm-opt.active { background: var(--marker); color: #fff; }
+
+  /* Bild-Modus: Text nicht markierbar, Aufziehen erlaubt */
+  .r-text-side.img-mode .textLayer { pointer-events: none; }
+  .r-text-side.img-mode .pdf-page { cursor: crosshair; }
+  .r-text-side.img-mode { user-select: none; }
+
+  /* Auswahl-Rechteck */
+  .img-marquee {
+    position: fixed; z-index: 190;
+    border: 2px solid var(--marker);
+    background: rgba(255,92,57,0.14);
+    pointer-events: none; display: none;
+    border-radius: 2px;
+  }
+  /* Thumbnail des Ausschnitts in der Erklär-Karte */
+  .r-quote-img { display: block; max-width: 100%; max-height: 90px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--line); }
   .r-close {
     background: rgba(255,255,255,0.1); color: #fff;
     border: none; border-radius: 9px;
@@ -887,6 +912,10 @@
   <div class="reader-top">
     <div class="r-brand"><span class="r-mark"><svg viewBox="0 0 64 64" fill="none" stroke="#FBFAF6" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="17" cy="15" r="7.5"/><circle cx="47" cy="15" r="7.5"/><path d="M11 33c0-12 9-19 21-19s21 7 21 19c0 13-9 21-21 21S11 46 11 33Z"/><circle cx="24.5" cy="32" r="6.5" stroke="#FF5C39"/><circle cx="39.5" cy="32" r="6.5" stroke="#FF5C39"/><path d="M31 32h2M18 30.5l-4-1.5M46 30.5l4-1.5" stroke="#FF5C39"/><path d="M28 44c1.5 1.6 6.5 1.6 8 0"/><ellipse cx="32" cy="40" rx="3" ry="2.3" fill="#FBFAF6" stroke="none"/></svg></span> Erklärbär</div>
     <span class="r-doc" id="rDoc">dokument.pdf</span>
+    <div class="r-modetoggle" id="rModeToggle">
+      <button class="rm-opt active" data-rmode="text">✏️ Text</button>
+      <button class="rm-opt" data-rmode="image">🖼️ Bild</button>
+    </div>
     <span class="r-badge detecting" id="rBadge">📊 Niveau wird erkannt…</span>
     <button class="r-close" id="rClose">← Zurück</button>
   </div>
@@ -925,6 +954,7 @@
   <button data-pl="kinderleicht">🧸 Kinderleicht</button>
   <button data-pl="alle" class="all">✨ Alle</button>
 </div>
+<div class="img-marquee" id="imgMarquee"></div>
 
 <!-- PDF.js für Text-Extraktion -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -1170,7 +1200,7 @@
   });
 
   // ══════════ READER (Phase 4) ══════════
-  console.log('Erklärbär build: reader-img-v9');
+  console.log('Erklärbär build: reader-img-v10-bild');
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1397,19 +1427,106 @@
 
   function hidePop() { rPop.classList.remove('show'); }
 
+  // ── Bild-Modus: Rechteck aufziehen und Ausschnitt erklären ──
+  let readerMode = 'text';
+  let pendingImage = null;
+
+  document.querySelectorAll('.rm-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.rm-opt').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      readerMode = btn.dataset.rmode;
+      hidePop();
+      const side = document.getElementById('rTextSide');
+      side.classList.toggle('img-mode', readerMode === 'image');
+    });
+  });
+
+  // Rechteck-Aufziehen auf den Seiten (nur im Bild-Modus, Desktop)
+  (function setupImageDrag() {
+    const side = document.getElementById('rTextSide');
+    const marquee = document.getElementById('imgMarquee');
+    let dragging = false, startX = 0, startY = 0, targetImg = null;
+
+    side.addEventListener('mousedown', (e) => {
+      if (readerMode !== 'image') return;
+      const pageDiv = e.target.closest('.pdf-page');
+      if (!pageDiv) return;
+      targetImg = pageDiv.querySelector('img');
+      if (!targetImg) return;
+      dragging = true;
+      startX = e.clientX; startY = e.clientY;
+      marquee.style.left = startX + 'px';
+      marquee.style.top = startY + 'px';
+      marquee.style.width = '0px';
+      marquee.style.height = '0px';
+      marquee.style.display = 'block';
+      hidePop();
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const x = Math.min(e.clientX, startX), y = Math.min(e.clientY, startY);
+      const w = Math.abs(e.clientX - startX), h = Math.abs(e.clientY - startY);
+      marquee.style.left = x + 'px'; marquee.style.top = y + 'px';
+      marquee.style.width = w + 'px'; marquee.style.height = h + 'px';
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (!dragging) return;
+      dragging = false;
+      marquee.style.display = 'none';
+      const w = Math.abs(e.clientX - startX), h = Math.abs(e.clientY - startY);
+      if (w < 12 || h < 12 || !targetImg) return;   // zu klein -> ignorieren
+
+      // Bildschirmkoordinaten -> Bildpixel umrechnen
+      const imgRect = targetImg.getBoundingClientRect();
+      const selL = Math.min(e.clientX, startX), selT = Math.min(e.clientY, startY);
+      // auf das Bild beschneiden
+      const cropL = Math.max(0, selL - imgRect.left);
+      const cropT = Math.max(0, selT - imgRect.top);
+      const cropR = Math.min(imgRect.width,  (selL + w) - imgRect.left);
+      const cropB = Math.min(imgRect.height, (selT + h) - imgRect.top);
+      const cropW = cropR - cropL, cropH = cropB - cropT;
+      if (cropW < 8 || cropH < 8) return;
+
+      const ratio = targetImg.naturalWidth / imgRect.width;  // Überabtastung berücksichtigen
+      const c = document.createElement('canvas');
+      c.width = Math.round(cropW * ratio);
+      c.height = Math.round(cropH * ratio);
+      const cx = c.getContext('2d');
+      cx.drawImage(targetImg,
+        cropL * ratio, cropT * ratio, cropW * ratio, cropH * ratio,
+        0, 0, c.width, c.height);
+      pendingImage = c.toDataURL('image/png').split(',')[1];   // base64 ohne Präfix
+
+      // Level-Wähler an der Markierung zeigen
+      rPop.style.left = (selL + w / 2) + 'px';
+      rPop.style.top  = selT + 'px';
+      rPop.classList.add('show');
+    });
+  })();
+
   // Klick auf ein Level im Popup -> Erklärung(en) erzeugen
   rPop.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => {
       const choice = btn.dataset.pl;
-      const text = pendingSelection;
       hidePop();
-      window.getSelection().removeAllRanges();
-      if (!text) return;
       const levels = choice === 'alle'
         ? ['fachlich', 'alltagstauglich', 'kinderleicht']
         : [choice];
-      explainSelection(levels, text);
-      // Am Handy zum Erklär-Panel scrollen, damit die Antwort sichtbar wird
+
+      if (readerMode === 'image' && pendingImage) {
+        const img = pendingImage;
+        pendingImage = null;
+        explainImage(levels, img);
+      } else {
+        const text = pendingSelection;
+        window.getSelection().removeAllRanges();
+        if (!text) return;
+        explainSelection(levels, text);
+      }
       if (isTouch) {
         const panel = document.querySelector('.r-panel-side');
         if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1450,6 +1567,56 @@
           levels,
           mode: 'marked',
           markedText,
+          detectedNiveau,
+          language: document.getElementById('rLang').value
+        })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || ('Server-Fehler ' + resp.status));
+      }
+      const data = await resp.json();
+      levels.forEach(lvl => {
+        const text = cleanText((data.explanations && data.explanations[lvl]) || '–');
+        cards[lvl].classList.remove('loading-card');
+        cards[lvl].querySelector('.r-card-body').textContent = text;
+      });
+    } catch (e) {
+      levels.forEach(lvl => {
+        cards[lvl].classList.remove('loading-card');
+        cards[lvl].querySelector('.r-card-body').textContent = '⚠️ ' + (e.message || 'Fehler');
+      });
+    }
+  }
+
+  // Erklärt einen markierten Bildausschnitt (Diagramm etc.). Zeigt eine Vorschau + Erklärung.
+  async function explainImage(levels, imageB64) {
+    const body = document.getElementById('rPanelBody');
+    body.innerHTML = '';
+    const thumb = '<img class="r-quote-img" src="data:image/png;base64,' + imageB64 + '" alt="Ausschnitt">';
+
+    const cards = {};
+    levels.forEach(lvl => {
+      const m = READER_LEVELS[lvl];
+      const card = document.createElement('div');
+      card.className = 'r-card loading-card';
+      card.style.borderLeftColor = m.border;
+      card.innerHTML =
+        thumb +
+        '<span class="r-card-tag" style="background:' + m.tagBg + ';color:' + m.tagColor + '">' + m.emoji + ' ' + m.label + '</span>' +
+        '<div class="r-card-body"><div class="r-skel" style="width:95%"></div><div class="r-skel" style="width:88%"></div><div class="r-skel" style="width:70%"></div></div>';
+      body.appendChild(card);
+      cards[lvl] = card;
+    });
+
+    try {
+      const resp = await fetch('/api/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          levels,
+          mode: 'image',
+          imageData: imageB64,
           detectedNiveau,
           language: document.getElementById('rLang').value
         })

@@ -114,7 +114,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server nicht konfiguriert (API-Key fehlt)' });
   }
 
-  const { levels, mode, topic, passage, pdf, markedText, detectedNiveau } = req.body || {};
+  const { levels, mode, topic, passage, pdf, markedText, detectedNiveau, imageData } = req.body || {};
   const language = req.body.language || 'Deutsch';
 
   // --- Eingaben prüfen ---
@@ -130,6 +130,9 @@ export default async function handler(req, res) {
   if (mode === 'marked' && !markedText) {
     return res.status(400).json({ error: 'Kein markierter Text angegeben' });
   }
+  if (mode === 'image' && !imageData) {
+    return res.status(400).json({ error: 'Kein Bildausschnitt angegeben' });
+  }
 
   // --- Basis-Anweisung je nach Modus ---
   let baseInstruction;
@@ -138,6 +141,8 @@ export default async function handler(req, res) {
   } else if (mode === 'marked') {
     baseInstruction = `Niveau des Originaldokuments: ${detectedNiveau || 'unbekannt'}.
 Markierter Originaltext:\n"""\n${markedText}\n"""`;
+  } else if (mode === 'image') {
+    baseInstruction = `Auf dem beigefügten Bild ist ein markierter Ausschnitt aus einer Vorlesungsfolie (z.B. ein Diagramm, eine Grafik, eine Formel oder eine Abbildung). Erkläre, was darauf zu sehen ist und was es inhaltlich bedeutet.${detectedNiveau ? ' Niveau des Dokuments: ' + detectedNiveau + '.' : ''}`;
   } else {
     baseInstruction = passage
       ? `Erkläre aus der beigefügten PDF speziell: "${passage}"`
@@ -170,6 +175,12 @@ Markierter Originaltext:\n"""\n${markedText}\n"""`;
       content.push({
         type: 'document',
         source: { type: 'base64', media_type: 'application/pdf', data: pdf }
+      });
+    }
+    if (mode === 'image' && imageData) {
+      content.push({
+        type: 'image',
+        source: { type: 'base64', media_type: 'image/png', data: imageData }
       });
     }
     content.push({
