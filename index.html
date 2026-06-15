@@ -708,11 +708,26 @@
     background-size: 200% 100%; animation: shimmer 1.3s infinite; }
   @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 
+  /* Level-Wähler als feste Leiste unten (Handy) */
+  .r-pop.bottom {
+    position: fixed;
+    left: 50%; right: auto;
+    top: auto; bottom: 16px;
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
+    max-width: 440px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .r-pop.bottom button { flex: 1 1 auto; min-width: 70px; padding: 11px 8px; }
+
   @media (max-width: 760px) {
     .reader-split { flex-direction: column; }
-    .r-text-side { padding: 1rem; flex: none; max-height: 45vh; }
-    .r-paper { padding: 1.5rem 1.25rem; }
-    .r-panel-side { max-width: none; min-width: 0; border-left: none; border-top: 1px solid var(--line); }
+    .r-text-side { padding: 1rem; flex: 1 1 auto; }
+    .r-panel-side { max-width: none; min-width: 0; border-left: none; border-top: 1px solid var(--line); max-height: 50vh; }
+    .reader-top { padding: 10px 14px; gap: 10px; flex-wrap: wrap; }
+    .reader-top .r-doc { display: none; }
+    .r-badge { font-size: 10px; padding: 5px 9px; }
   }
 </style>
 </head>
@@ -1093,7 +1108,7 @@
   });
 
   // ══════════ READER (Phase 4) ══════════
-  console.log('Erklärbär build: reader-img-v7');
+  console.log('Erklärbär build: reader-img-v8-mobile');
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1182,15 +1197,22 @@
   async function renderPage(page, container, targetWidth, canvas, ctx) {
     const base = page.getViewport({ scale: 1 });
     const scale = targetWidth / base.width;
-    const viewport = page.getViewport({ scale });
+    const viewport = page.getViewport({ scale });   // Anzeigegröße (CSS)
     const w = Math.floor(viewport.width);
     const h = Math.floor(viewport.height);
 
-    // Gemeinsames Canvas auf Seitengröße setzen (das löscht es zugleich)
-    canvas.width  = w;
-    canvas.height = h;
-    await page.render({ canvasContext: ctx, viewport }).promise;
-    const dataUrl = canvas.toDataURL('image/png');
+    // Überabtastung für Schärfe (v.a. auf Handys mit hoher Pixeldichte):
+    // Canvas wird größer gerendert, aber in CSS-Größe angezeigt -> scharf.
+    // Gedeckelt bei 2x, damit der Speicher bei vielen Seiten nicht explodiert.
+    const os = Math.min(window.devicePixelRatio || 1, 2);
+    const renderViewport = page.getViewport({ scale: scale * os });
+
+    // Gemeinsames Canvas auf Renderpixel-Größe setzen (das löscht es zugleich)
+    canvas.width  = Math.floor(renderViewport.width);
+    canvas.height = Math.floor(renderViewport.height);
+    await page.render({ canvasContext: ctx, viewport: renderViewport }).promise;
+    // JPEG statt PNG: deutlich kleiner -> weniger Speicher bei vielen Seiten
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
 
     const pageDiv = document.createElement('div');
     pageDiv.className = 'pdf-page';
@@ -1200,7 +1222,7 @@
     const img = document.createElement('img');
     img.src = dataUrl;
     img.style.display = 'block';
-    img.style.width  = w + 'px';
+    img.style.width  = w + 'px';     // Anzeige in CSS-Größe -> Bild wird scharf herunterskaliert
     img.style.height = h + 'px';
     pageDiv.appendChild(img);
 
@@ -1260,34 +1282,59 @@
     hidePop();
   });
 
-  // Markierung → schwebender Level-Wähler
+  // Markierung → Level-Wähler. Desktop: schwebend über der Auswahl (mouseup).
+  // Handy/Touch: feste Leiste unten (selectionchange), da iOS kein mouseup liefert.
   const rPop = document.getElementById('rPop');
   let pendingSelection = '';
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
 
-  document.getElementById('rTextSide').addEventListener('mouseup', (e) => {
-    // Klick auf den Popup selbst nicht als neue Markierung behandeln
-    if (rPop.contains(e.target)) return;
-    setTimeout(() => {
-      const sel = window.getSelection();
-      const text = sel ? sel.toString().trim() : '';
-      if (text.length > 8 && sel.rangeCount > 0) {
-        const rect = sel.getRangeAt(0).getBoundingClientRect();
-        pendingSelection = text;
-        rPop.style.left = (rect.left + rect.width / 2) + 'px';
-        rPop.style.top  = rect.top + 'px';
-        rPop.classList.add('show');
-      } else {
-        hidePop();
-      }
-    }, 10);
-  });
+  function selectionInReader(sel) {
+    if (!sel || sel.rangeCount === 0) return false;
+    const node = sel.anchorNode;
+    const side = document.getElementById('rTextSide');
+    return node && side.contains(node.nodeType === 1 ? node : node.parentNode);
+  }
+
+  if (isTouch) {
+    // Touch: auf Auswahländerung reagieren (entprellt)
+    let selTimer;
+    document.addEventListener('selectionchange', () => {
+      clearTimeout(selTimer);
+      selTimer = setTimeout(() => {
+        const sel = window.getSelection();
+        const text = sel ? sel.toString().trim() : '';
+        if (text.length > 8 && selectionInReader(sel)) {
+          pendingSelection = text;
+          rPop.classList.add('bottom', 'show');   // feste Leiste unten
+        } else {
+          hidePop();
+        }
+      }, 350);
+    });
+  } else {
+    // Desktop: schwebend über der Markierung
+    document.getElementById('rTextSide').addEventListener('mouseup', (e) => {
+      if (rPop.contains(e.target)) return;
+      setTimeout(() => {
+        const sel = window.getSelection();
+        const text = sel ? sel.toString().trim() : '';
+        if (text.length > 8 && sel.rangeCount > 0) {
+          const rect = sel.getRangeAt(0).getBoundingClientRect();
+          pendingSelection = text;
+          rPop.style.left = (rect.left + rect.width / 2) + 'px';
+          rPop.style.top  = rect.top + 'px';
+          rPop.classList.add('show');
+        } else {
+          hidePop();
+        }
+      }, 10);
+    });
+    document.addEventListener('mousedown', (e) => {
+      if (!rPop.contains(e.target)) hidePop();
+    });
+  }
 
   function hidePop() { rPop.classList.remove('show'); }
-
-  // Klick außerhalb von Popup/Text schließt den Wähler
-  document.addEventListener('mousedown', (e) => {
-    if (!rPop.contains(e.target)) hidePop();
-  });
 
   // Klick auf ein Level im Popup -> Erklärung(en) erzeugen
   rPop.querySelectorAll('button').forEach(btn => {
@@ -1301,6 +1348,11 @@
         ? ['fachlich', 'alltagstauglich', 'kinderleicht']
         : [choice];
       explainSelection(levels, text);
+      // Am Handy zum Erklär-Panel scrollen, damit die Antwort sichtbar wird
+      if (isTouch) {
+        const panel = document.querySelector('.r-panel-side');
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   });
 
