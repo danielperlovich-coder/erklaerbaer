@@ -217,6 +217,21 @@
     font-weight: 600; margin-top: 6px; display: none;
   }
 
+  /* PDF-Auswahl nach Upload */
+  .pdf-choice { display: flex; gap: 11px; margin-top: 12px; }
+  .pdf-opt {
+    flex: 1; display: flex; flex-direction: column; gap: 3px;
+    text-align: left; cursor: pointer;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 14px 14px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    font-family: inherit;
+  }
+  .pdf-opt:hover { transform: translateY(-2px); border-color: var(--ink); box-shadow: 0 10px 24px -12px rgba(31,27,22,0.2); }
+  .pdf-opt .po-emoji { font-size: 22px; }
+  .pdf-opt .po-t { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600; font-size: 14px; color: var(--ink); }
+  .pdf-opt .po-d { font-size: 11.5px; color: var(--ink-2); }
+
   .passage-row { margin-top: 11px; }
   .passage-row label {
     font-size: 10.5px;
@@ -783,7 +798,22 @@
             <div class="fname" id="fname"></div>
           </div>
           <input type="file" id="fileInput" accept=".pdf" style="display:none">
-          <div class="passage-row">
+
+          <!-- Auswahl nach Upload (nur Desktop) -->
+          <div class="pdf-choice" id="pdfChoice" style="display:none">
+            <button type="button" class="pdf-opt" id="openReaderBtn">
+              <span class="po-emoji">📖</span>
+              <span class="po-t">Im Reader öffnen</span>
+              <span class="po-d">PDF lesen &amp; Stellen markieren</span>
+            </button>
+            <button type="button" class="pdf-opt" id="askPdfBtn">
+              <span class="po-emoji">💬</span>
+              <span class="po-t">Frage zur PDF stellen</span>
+              <span class="po-d">Passage/Thema eingeben</span>
+            </button>
+          </div>
+
+          <div class="passage-row" id="passageRow" style="display:none">
             <label>Optional: Passage oder Konzept</label>
             <input type="text" id="passageInput" placeholder='z.B. „Folie 12, Regressionsanalyse" – oder leer lassen für das Hauptthema'>
           </div>
@@ -921,6 +951,9 @@
   let selectedLevel = 'alltagstauglich';
   let allMode = false;
   let pdfB64 = null;
+  let pdfFile = null;
+  // Touch-Gerät (Handy/Tablet)? Bestimmt das Verhalten beim PDF-Upload.
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
 
   // Erste Karte ist jetzt in beiden Modi "Fachlich" – kein Umschalten mehr nötig.
   function applyModeLevels() {}
@@ -983,25 +1016,54 @@
   });
   fileInput.addEventListener('change', e => { if (e.target.files[0]) loadPDF(e.target.files[0]); });
 
+  document.getElementById('openReaderBtn').addEventListener('click', startPdfReader);
+  document.getElementById('askPdfBtn').addEventListener('click', startPdfQuestion);
+
   function loadPDF(file) {
-    // 4 MB Grenze: Vercel erlaubt max ~4,5 MB Request-Body. Base64 bläht
-    // die Datei um ~33% auf, daher hier sicher bei 4 MB Originaldatei kappen.
-    if (file.size > 4 * 1024 * 1024) {
-      showError('PDF zu groß (max 4 MB). Tipp: Nur die relevanten Seiten exportieren.');
+    pdfFile = file;
+    pdfB64 = null;
+    document.getElementById('fname').textContent = file.name;
+    document.getElementById('fname').style.display = 'block';
+    dropZone.querySelector('.hint').style.display = 'none';
+    // Auswahl/Felder zurücksetzen
+    document.getElementById('passageRow').style.display = 'none';
+    document.getElementById('pdfChoice').style.display = 'none';
+    checkReady();
+
+    if (isTouch) {
+      // Handy: kein Reader (Markieren geht dort nicht zuverlässig) -> direkt Frage-Weg
+      startPdfQuestion();
+    } else {
+      // Desktop: Wahl anbieten – Reader oder Frage
+      document.getElementById('pdfChoice').style.display = 'flex';
+    }
+  }
+
+  // Liest die PDF als Base64 (für den Backend-Weg "Frage zur PDF"). 4-MB-Grenze
+  // gilt NUR hier, weil die Datei an den Server geschickt wird (Vercel-Limit ~4,5 MB).
+  function startPdfQuestion() {
+    if (pdfFile.size > 4 * 1024 * 1024) {
+      showError('Für "Frage zur PDF" max 4 MB (die Datei wird an den Server geschickt). Tipp: relevante Seiten exportieren – oder am PC den Reader nutzen.');
       return;
     }
-    // Base64 weiterhin speichern (Fallback: Gesamt-Zusammenfassung via "Erklär's mir")
+    document.getElementById('pdfChoice').style.display = 'none';
     const r = new FileReader();
     r.onload = ev => {
       pdfB64 = ev.target.result.split(',')[1];
-      document.getElementById('fname').textContent = file.name;
-      document.getElementById('fname').style.display = 'block';
-      dropZone.querySelector('.hint').style.display = 'none';
+      document.getElementById('passageRow').style.display = 'block';
       checkReady();
     };
-    r.readAsDataURL(file);
-    // Hauptweg: Text extrahieren und Reader öffnen
-    openReaderFromFile(file);
+    r.readAsDataURL(pdfFile);
+  }
+
+  // Reader liest die PDF lokal im Browser (kein Server) -> größere Dateien erlaubt.
+  function startPdfReader() {
+    if (pdfFile.size > 30 * 1024 * 1024) {
+      showError('PDF zu groß für den Reader (max 30 MB).');
+      return;
+    }
+    document.getElementById('pdfChoice').style.display = 'none';
+    openReaderFromFile(pdfFile);
   }
 
   document.getElementById('topicInput').addEventListener('input', checkReady);
@@ -1108,7 +1170,7 @@
   });
 
   // ══════════ READER (Phase 4) ══════════
-  console.log('Erklärbär build: reader-img-v8-mobile');
+  console.log('Erklärbär build: reader-img-v9');
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1211,8 +1273,8 @@
     canvas.width  = Math.floor(renderViewport.width);
     canvas.height = Math.floor(renderViewport.height);
     await page.render({ canvasContext: ctx, viewport: renderViewport }).promise;
-    // JPEG statt PNG: deutlich kleiner -> weniger Speicher bei vielen Seiten
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    // PNG: schärfer bei Text als JPEG. Reader läuft nur am Desktop -> Speicher unkritisch.
+    const dataUrl = canvas.toDataURL('image/png');
 
     const pageDiv = document.createElement('div');
     pageDiv.className = 'pdf-page';
@@ -1286,7 +1348,6 @@
   // Handy/Touch: feste Leiste unten (selectionchange), da iOS kein mouseup liefert.
   const rPop = document.getElementById('rPop');
   let pendingSelection = '';
-  const isTouch = window.matchMedia('(pointer: coarse)').matches;
 
   function selectionInReader(sel) {
     if (!sel || sel.rangeCount === 0) return false;
