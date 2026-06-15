@@ -1200,7 +1200,7 @@
   });
 
   // ══════════ READER (Phase 4) ══════════
-  console.log('Erklärbär build: reader-img-v10-bild');
+  console.log('Erklärbär build: reader-img-v11-bild');
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1405,6 +1405,7 @@
   } else {
     // Desktop: schwebend über der Markierung
     document.getElementById('rTextSide').addEventListener('mouseup', (e) => {
+      if (readerMode === 'image') return;   // im Bild-Modus nicht den Text-Wähler triggern
       if (rPop.contains(e.target)) return;
       setTimeout(() => {
         const sel = window.getSelection();
@@ -1421,6 +1422,7 @@
       }, 10);
     });
     document.addEventListener('mousedown', (e) => {
+      if (readerMode === 'image') return;   // im Bild-Modus übernimmt die Aufzieh-Logik
       if (!rPop.contains(e.target)) hidePop();
     });
   }
