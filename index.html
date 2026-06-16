@@ -684,13 +684,29 @@
   .r-pop button.all { background: var(--green); color: #07310f; }
   .r-pop button.all:hover { background: var(--green-deep); color: #fff; }
 
+  /* Resizer-Griff zwischen PDF und Erklär-Panel */
+  .r-resizer {
+    flex: 0 0 6px;
+    cursor: col-resize;
+    background: var(--line);
+    position: relative;
+    transition: background 0.15s;
+  }
+  .r-resizer::before {
+    content: ''; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px; height: 30px; border-radius: 2px;
+    background: var(--ink-3);
+  }
+  .r-resizer:hover, .r-resizer.dragging { background: var(--marker); }
+
   /* Right: explanation panel */
   .r-panel-side {
-    flex: 1;
+    flex: 0 0 420px;
     background: var(--bg);
     border-left: 1px solid var(--line);
     display: flex; flex-direction: column;
-    min-width: 360px; max-width: 480px;
+    min-width: 300px;
     overflow: hidden;
   }
   .r-panel-head {
@@ -763,8 +779,9 @@
 
   @media (max-width: 760px) {
     .reader-split { flex-direction: column; }
+    .r-resizer { display: none; }
     .r-text-side { padding: 1rem; flex: 1 1 auto; }
-    .r-panel-side { max-width: none; min-width: 0; border-left: none; border-top: 1px solid var(--line); max-height: 50vh; }
+    .r-panel-side { flex: 1 1 auto; max-width: none; min-width: 0; border-left: none; border-top: 1px solid var(--line); max-height: 50vh; }
     .reader-top { padding: 10px 14px; gap: 10px; flex-wrap: wrap; }
     .reader-top .r-doc { display: none; }
     .r-badge { font-size: 10px; padding: 5px 9px; }
@@ -923,7 +940,8 @@
     <div class="r-text-side" id="rTextSide">
       <div class="r-paper" id="rPaper"></div>
     </div>
-    <div class="r-panel-side">
+    <div class="r-resizer" id="rResizer" title="Ziehen, um die Breite zu ändern"></div>
+    <div class="r-panel-side" id="rPanelSide">
       <div class="r-panel-head">
         <div class="r-title-row">
           <span class="r-title">Erklärungen</span>
@@ -1200,7 +1218,7 @@
   });
 
   // ══════════ READER (Phase 4) ══════════
-  console.log('Erklärbär build: reader-img-v11-bild');
+  console.log('Erklärbär build: reader-img-v13-resize');
   if (window.pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1211,6 +1229,8 @@
   let detectedNiveau = null;
   let lastLevels = null;     // aktuell angezeigte Level (für Sprach-Umschaltung)
   let lastMarkedText = '';   // aktuell erklärte Textstelle
+  let lastImage = null;      // zuletzt erklärter Bildausschnitt (base64)
+  let lastExplainMode = 'text'; // 'text' | 'image' – was zuletzt erklärt wurde
 
   const READER_LEVELS = {
     fachlich:       { emoji:'📚', label:'Fachlich',       border:'#2F4858', tagBg:'#eef2f4', tagColor:'#2F4858' },
@@ -1243,6 +1263,8 @@
     detectedNiveau = null;
     lastLevels = null;
     lastMarkedText = '';
+    lastImage = null;
+    lastExplainMode = 'text';
     reader.classList.add('open');
 
     let pdf;
@@ -1320,7 +1342,7 @@
 
     const tl = document.createElement('div');
     tl.className = 'textLayer';
-    tl.style.setProperty('--scale-factor', scale);
+    tl.style.setProperty('--scale-factor', String(scale));
     tl.style.width  = w + 'px';
     tl.style.height = h + 'px';
     pageDiv.appendChild(tl);
@@ -1363,7 +1385,9 @@
 
   // Sprache nachträglich umschalten -> aktuelle Erklärung(en) in neuer Sprache neu erzeugen
   document.getElementById('rLang').addEventListener('change', () => {
-    if (lastLevels && lastMarkedText) {
+    if (lastExplainMode === 'image' && lastImage && lastLevels) {
+      explainImage(lastLevels, lastImage);
+    } else if (lastLevels && lastMarkedText) {
       explainSelection(lastLevels, lastMarkedText);
     }
   });
@@ -1510,7 +1534,34 @@
     });
   })();
 
-  // Klick auf ein Level im Popup -> Erklärung(en) erzeugen
+  // ── Breite des Erklär-Panels per Ziehen anpassen ──
+  (function setupResizer() {
+    const resizer = document.getElementById('rResizer');
+    const panel = document.getElementById('rPanelSide');
+    const split = document.querySelector('.reader-split');
+    let dragging = false;
+    resizer.addEventListener('mousedown', (e) => {
+      dragging = true;
+      resizer.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const rect = split.getBoundingClientRect();
+      let newW = rect.right - e.clientX;                       // Panelbreite = Abstand zum rechten Rand
+      newW = Math.max(300, Math.min(newW, rect.width - 320));  // Grenzen, damit beide Seiten lesbar bleiben
+      panel.style.flex = '0 0 ' + newW + 'px';
+    });
+    window.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      resizer.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+  })();
   rPop.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', () => {
       const choice = btn.dataset.pl;
@@ -1541,6 +1592,7 @@
   async function explainSelection(levels, markedText) {
     lastLevels = levels;
     lastMarkedText = markedText;
+    lastExplainMode = 'text';
     const body = document.getElementById('rPanelBody');
     body.innerHTML = '';
 
@@ -1593,6 +1645,9 @@
 
   // Erklärt einen markierten Bildausschnitt (Diagramm etc.). Zeigt eine Vorschau + Erklärung.
   async function explainImage(levels, imageB64) {
+    lastLevels = levels;
+    lastImage = imageB64;
+    lastExplainMode = 'image';
     const body = document.getElementById('rPanelBody');
     body.innerHTML = '';
     const thumb = '<img class="r-quote-img" src="data:image/png;base64,' + imageB64 + '" alt="Ausschnitt">';
